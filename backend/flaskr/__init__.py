@@ -1,6 +1,4 @@
 import os
-from unicodedata import category
-from unittest import result
 from flask import Flask, request, abort, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
@@ -14,10 +12,8 @@ def paginate_questions(query):
     page = request.args.get('page', 1, type=int)
 
     # throw error when page is beyond pagination
-    # if page > len(query):
-    #     return{
-    #         "errror":404
-    #     }
+    if page > len(query):
+        abort(404)
     
     start = (page - 1) * QUESTIONS_PER_PAGE
     end = start + QUESTIONS_PER_PAGE
@@ -60,6 +56,7 @@ def create_app(test_config=None):
             categories = {category.id:category.type for category in query}
 
             return jsonify({
+                "success":True,
                 "categories": categories,
             })
         except:
@@ -94,6 +91,7 @@ def create_app(test_config=None):
 
 
             return jsonify({
+                "success":True,
                 "questions": current_question,
                 "totalQuestions": len(question_query),
                 "categories": categories,
@@ -148,7 +146,7 @@ def create_app(test_config=None):
         try:
             body = request.get_json()
 
-            if not ('question' in body and 'answer' in body and 'diffculty' in body and 'category' in body):
+            if not ('question' in body and 'answer' in body and 'difficulty' in body and 'category' in body):
                 abort(422)
 
             new_question = body.get('question', None)
@@ -195,6 +193,7 @@ def create_app(test_config=None):
             questions = [question.format() for question in search_result]
 
             return jsonify({
+                "success":True,
                 "questions": questions,
                 "totalQuestions":len(search_result),
                 "currentCategory":None,
@@ -221,6 +220,7 @@ def create_app(test_config=None):
             questions = [question.format() for question in question_query]
 
             return jsonify({
+                "success": True,
                 "questions":questions,
                 "totalQuestions":len(question_query),
                 "currentCategory": category.type
