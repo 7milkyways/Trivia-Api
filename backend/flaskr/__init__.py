@@ -52,8 +52,11 @@ def create_app(test_config=None):
             if len(query) == 0:
                 abort(404)
 
+            
+            categories = {}
             # Populating the all categories into a dictionary 
-            categories = {category.id:category.type for category in query}
+            for category in query:
+                categories[category.id] = category.type
 
             return jsonify({
                 "success":True,
@@ -76,7 +79,7 @@ def create_app(test_config=None):
             
             
             categories = {}
-            # Looping categories into a dictionary
+            # populating categories into a dictionary
             for category in category_query:
                 categories[category.id] = category.type
 
@@ -118,12 +121,12 @@ def create_app(test_config=None):
                 if not ('question' in body and 'answer' in body and 'difficulty' in body and 'category' in body):
                     abort(422)
 
-                new_question = body.get('question')
-                new_answer = body.get('answer')
-                new_difficulty = body.get('difficulty')
-                new_category = body.get('category')
+                question = body.get('question')
+                answer = body.get('answer')
+                difficulty = body.get('difficulty')
+                category = body.get('category')
 
-                new_question = Question(question=new_question, answer=new_answer, difficulty=new_difficulty, category=new_category)
+                new_question = Question(question=question, answer=answer, difficulty=difficulty, category=category)
 
                 new_question.insert()
 
@@ -132,17 +135,16 @@ def create_app(test_config=None):
                     "error":200
                 })
             elif 'searchTerm' in body:
-                search_term = body.get('searchTerm', None)
-
+                search = body.get('searchTerm')
                 
-                search_result = Question.query.filter(Question.question.ilike(f'%{search_term}%')).all()
+                query = Question.query.filter(Question.question.ilike(f'%{search}%')).all()
 
-                questions = [question.format() for question in search_result]
+                search_result = paginate_questions(query)
 
                 return jsonify({
                     "success":True,
-                    "questions": questions,
-                    "totalQuestions":len(search_result),
+                    "questions": search_result,
+                    "totalQuestions":len(query),
                 })
             else:
                 abort(422)
@@ -178,13 +180,13 @@ def create_app(test_config=None):
         try:
             body = request.get_json()
 
-            if not ('quiz_category' in body and 'previous_questions' in body):
-                abort(404)
+            # if not ('quiz_category' in body and 'previous_questions' in body):
+            #     abort(404)
 
             previous_questions = body.get('previous_questions')
             quiz_category = body.get('quiz_category')
 
-            if quiz_category['type'] == "click":
+            if quiz_category['id'] == 0:
                 query = Question.query.all()
             else:
                 query = Question.query.filter_by(category=quiz_category['id']).all()
@@ -192,13 +194,15 @@ def create_app(test_config=None):
             question_length = len(query) - 1
             next_question = query[random.randrange(0, question_length)]
                 
-            if not(next_question.id in previous_questions):
+            if next_question.id not in previous_questions:
+                next_question = query[random.randrange(0, question_length)]
+                
                 return jsonify({
                     "question": next_question.format(),
                     "success":True,
                 })
-            else:
-                next_question = query[random.randrange(0, question_length)]
+            # else:
+            #     next_question = query[random.randrange(0, question_length)]
 
 
         except:
