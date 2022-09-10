@@ -64,7 +64,7 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(data['success'], False)
 
     def test_delete_question(self):
-        res = self.client().delete('/questions/15')
+        res = self.client().delete('/questions/12')
         data = json.loads(res.data)
 
         self.assertEqual(res.status_code, 200)
@@ -112,7 +112,7 @@ class TriviaTestCase(unittest.TestCase):
         search_term = {
             "searchTerm": "what"
         }
-        res = self.client().post('/questions/search', json=search_term)
+        res = self.client().post('/questions', json=search_term)
         data = json.loads(res.data)
 
         self.assertEqual(res.status_code, 200)
@@ -122,10 +122,10 @@ class TriviaTestCase(unittest.TestCase):
 
     def test_error_404_search_questions(self):
         search_term = {}
-        res = self.client().post('/questions/search', json=search_term)
+        res = self.client().post('/questions', json=search_term)
         data = json.loads(res.data)
 
-        self.assertEqual(res.status_code, 404)
+        self.assertEqual(res.status_code, 422)
         self.assertEqual(data['success'], False)
         self.assertTrue(data['message'], 'Not Found')
 
@@ -169,15 +169,6 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(res.status_code, 422)
         self.assertEqual(data['success'], False)
         self.assertEqual(data['message'], 'Unprocessable Entity')
-
-
-
-
-
-
-
-
-
 
 
 # Make the tests conveniently executable

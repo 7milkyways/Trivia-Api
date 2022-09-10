@@ -111,48 +111,43 @@ def create_app(test_config=None):
         try:
             body = request.get_json()
 
-            if not ('question' in body and 'answer' in body and 'difficulty' in body and 'category' in body):
+            if not('searchTerm' in body):
+
+                if not ('question' in body and 'answer' in body and 'difficulty' in body and 'category' in body):
+                    abort(422)
+
+                new_question = body.get('question', None)
+                new_answer = body.get('answer', None)
+                new_difficulty = body.get('difficulty', None)
+                new_category = body.get('category', None)
+
+                new_question = Question(question=new_question, answer=new_answer, difficulty=new_difficulty, category=new_category)
+
+                new_question.insert()
+
+                return jsonify({
+                    "success":True,
+                    "error":200
+                })
+            elif 'searchTerm' in body:
+                search_term = body.get('searchTerm', None)
+
+                
+                search_result = Question.query.filter(Question.question.ilike(f'%{search_term}%')).all()
+
+                questions = [question.format() for question in search_result]
+
+                return jsonify({
+                    "success":True,
+                    "questions": questions,
+                    "totalQuestions":len(search_result),
+                    "currentCategory":None,
+                })
+            else:
                 abort(422)
 
-            new_question = body.get('question', None)
-            new_answer = body.get('answer', None)
-            new_difficulty = body.get('difficulty', None)
-            new_category = body.get('category', None)
-
-            new_question = Question(question=new_question, answer=new_answer, difficulty=new_difficulty, category=new_category)
-
-            new_question.insert()
-
-            return jsonify({
-                "success":True,
-                "error":200
-            })
         except:
             abort(422)
-
-
-    @app.route('/questions/search', methods=['POST'])
-    def search_question():
-        try:
-            body = request.get_json()
-
-            if not 'searchTerm' in body:
-                abort(404)
-
-            search_term = body.get('searchTerm', None)
-
-            search_result = Question.query.filter(Question.question.ilike(f'%{search_term}%')).all()
-
-            questions = [question.format() for question in search_result]
-
-            return jsonify({
-                "success":True,
-                "questions": questions,
-                "totalQuestions":len(search_result),
-                "currentCategory":None,
-            })
-        except:
-            abort(404)
 
     @app.route('/categories/<int:id>/questions', methods=['GET'])
     def question_by_category(id):
